@@ -89,6 +89,10 @@ function changeTypeSwitch(typeInput) {
 			$('.types').slideUp();
 			$('.typeWebsite').slideDown();
 			break;
+		case 'dns':
+			$('.types').slideUp();
+			$('.typeDNS').slideDown(); // Caret / EJT TODO
+			break;
 
 		default:
 			$('.types').hide();

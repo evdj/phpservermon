@@ -123,6 +123,7 @@ $sm_lang = array(
 		'timeout_description' => 'Aantal seconden te wachten op een reactie van de server.',
 		'port' => 'Poort',
 		'type' => 'Type',
+		'type_dns' => 'DNS Lookup',
 		'type_website' => 'Website',
 		'type_service' => 'Service',
 		'pattern' => 'Zoek voor tekst/regex',

@@ -215,7 +215,7 @@ class Installer {
                                    user_id  int4 NOT NULL ,
                                    PRIMARY KEY (log_id, user_id)
          						);",
-			PSM_DB_PREFIX . 'serverstype' => "CREATE TYPE " . PSM_DB_PREFIX . "serverstype AS ENUM('service','website');",
+			PSM_DB_PREFIX . 'serverstype' => "CREATE TYPE " . PSM_DB_PREFIX . "serverstype AS ENUM('service','website','dns');",
 			PSM_DB_PREFIX . 'onoff' => "CREATE TYPE " . PSM_DB_PREFIX . "onoff AS ENUM('on','off');",
 			PSM_DB_PREFIX . 'yesno' => "CREATE TYPE " . PSM_DB_PREFIX . "yesno AS ENUM('yes','no');",
 
@@ -235,11 +235,14 @@ class Installer {
 						  email ". PSM_DB_PREFIX ."yesno NOT NULL default 'yes',
 						  sms ". PSM_DB_PREFIX ."yesno NOT NULL default 'no',
 						  pushover ". PSM_DB_PREFIX ."yesno NOT NULL default 'yes',
-                          warning_threshold int2 NOT NULL DEFAULT '1',
-                          warning_threshold_counter int2 NOT NULL DEFAULT '0',
-                          timeout int2 NULL DEFAULT NULL,
-                          website_username varchar(255) DEFAULT NULL,
+						  warning_threshold int2 NOT NULL DEFAULT '1',
+						  warning_threshold_counter int2 NOT NULL DEFAULT '0',
+						  timeout int2 NULL DEFAULT NULL,
+						  website_username varchar(255) DEFAULT NULL,
 						  website_password varchar(255) DEFAULT NULL,
+						  dns_query varchar(255) DEFAULT NULL,
+						  dns_type varchar(16) DEFAULT NULL,
+						  dns_expected varchar(255) DEFAULT NULL,
 						  PRIMARY KEY  (server_id)
 						);",
 			PSM_DB_PREFIX . 'servers_uptime' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "servers_uptime (

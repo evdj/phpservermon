@@ -22,6 +22,7 @@
 					<option value="">{{ label_please_select }}</option>
 					<option value="service" {{ edit_type_selected_service|raw }}>{{ label_service }}</option>
 					<option value="website" {{ edit_type_selected_website|raw }}>{{ label_website }}</option>
+					<option value="dns" {{ edit_type_selected_dns|raw }}>{{ label_dns }}</option>
 				 </select>
 			</div>
 		</div>
@@ -73,6 +74,24 @@
 			<label class="control-label" for="timeout">{{ label_timeout }}</label>
 			<div class="controls">
 				<input class="input-mini" type="text" id="timeout" name="timeout" value="{{ edit_value_timeout }}" placeholder="{{ default_value_timeout }}" maxlength="10" data-toggle="tooltip" title="{{ label_timeout_description }}" /> s
+			</div>
+		</div>
+		<div class="control-group types typeDNS">
+			<label class="control-label" for="dns_query">{{ label_dns_query }}</label>
+			<div class="controls">
+				<input type="text" id="dns_query" name="dns_query" value="{{ edit_dns_query }}" maxlength="255" data-toggle="tooltip" title="{{ label_dns_query_description }}" />
+			</div>
+		</div>
+		<div class="control-group types typeDNS">
+			<label class="control-label" for="dns_type">{{ label_dns_type }}</label>
+			<div class="controls">
+				<input type="text" id="dns_type" name="dns_type" value="{{ edit_dns_type }}" maxlength="255" data-toggle="tooltip" title="{{ label_dns_type_description }}" />
+			</div>
+		</div>
+		<div class="control-group types typeDNS">
+			<label class="control-label" for="dns_expected">{{ label_dns_expected }}</label>
+			<div class="controls">
+				<input type="text" id="dns_expected" name="dns_expected" value="{{ edit_dns_expected }}" maxlength="255" data-toggle="tooltip" title="{{ label_dns_expected_description }}" />
 			</div>
 		</div>
 	</fieldset>

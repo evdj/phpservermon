@@ -96,6 +96,9 @@ class StatusUpdater {
 			case 'website':
 				$this->status_new = $this->updateWebsite($max_runs);
 				break;
+			case 'dns':
+				$this->status_new = $this->updateDNS($max_runs);
+				break;
 		}
 
 		// update server status
@@ -132,6 +135,49 @@ class StatusUpdater {
 
 		return $this->status_new;
 
+	}
+
+	/**
+	 * Check the current server as a DNS server
+	 * @param int $max_runs
+	 * @param int $run
+	 * @return boolean
+	 */
+	protected function updateDNS($max_runs, $run = 1) {
+                printf("Checking DNS\n");
+                $status = false;
+                if (!strlen($this->server["dns_query"])) {
+                    // Missing required fields. Fall back to service check
+                    return $this->updateService($max_runs, $run);
+                }
+                list($dns_server,$question,$type,$response) = array( $this->server["ip"], $this->server["dns_query"], $this->server["dns_type"], $this->server["expected"] );
+                if (!strlen($dns_server) || $dns_server == 'default' || $dns_server == '') {
+                    $dns_server = '8.8.8.8'; # Google DNS server
+                }
+                $dns_query = new \PurplePixie\PhpDns\DNSQuery($dns_server);
+		// save response time
+		$starttime = microtime(true);
+                $result = $dns_query->Query($question,$type);
+		$this->rtime = (microtime(true) - $starttime);
+                if ( ($result === false) || ($dns_query->hasError()) ) {
+                    $this->error = $dns_query->getLasterror();
+                } else {
+                    $result_count=$result->count(); // number of results returned
+
+                    $result->rewind();
+                    for ($a=0; $a<$result_count; $a++)
+                    {
+                        $cur = $result->current();
+                        if ($cur->getTypeid() == $type) // only after A records
+                        {
+                            #echo $question." has IP address ".$cur->getData()."<br>";
+                            #echo $cur->getString()."<br>";
+                            $status = ( ($cur->getData() == $response) ? true : false);
+                        }
+                        $cur = $result->next();
+                    }
+                }
+		return $status;
 	}
 
 	/**
