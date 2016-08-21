@@ -47,41 +47,42 @@ abstract class AbstractServerController extends AbstractController {
 
 		if($this->getUser()->getUserLevel() > PSM_USER_ADMIN) {
 			// restrict by user_id
-			$sql_join = "JOIN `".PSM_DB_PREFIX."users_servers` AS `us` ON (
-						`us`.`user_id`={$this->getUser()->getUserId()}
-						AND `us`.`server_id`=`s`.`server_id`
+			$sql_join = "JOIN ".PSM_DB_PREFIX."users_servers AS us ON (
+						us.user_id={$this->getUser()->getUserId()}
+						AND us.server_id=s.server_id
 						)";
 		}
 		if($server_id !== null) {
 			$server_id = intval($server_id);
-			$sql_where ="WHERE `s`.`server_id`={$server_id} ";
+			$sql_where ="WHERE s.server_id={$server_id} ";
 		}
 
-		$sql = "SELECT
-					`s`.`server_id`,
-					`s`.`ip`,
-					`s`.`port`,
-					`s`.`type`,
-					`s`.`label`,
-					`s`.`pattern`,
-					`s`.`status`,
-					`s`.`error`,
-					`s`.`rtime`,
-					`s`.`last_check`,
-					`s`.`last_online`,
-					`s`.`active`,
-					`s`.`email`,
-					`s`.`sms`,
-					`s`.`pushover`,
-					`s`.`warning_threshold`,
-					`s`.`warning_threshold_counter`,
-					`s`.`timeout`,
-					`s`.`website_username`,
-					`s`.`website_password`
-				FROM `".PSM_DB_PREFIX."servers` AS `s`
+		$sql = 'SELECT
+					"s"."server_id",
+					"s"."ip",
+					"s"."port",
+					"s"."type",
+					"s"."label",
+					"s"."pattern",
+					"s"."status",
+					"s"."error",
+					"s"."rtime",
+					"s"."last_check",
+					"s"."last_online",
+					"s"."active",
+					"s"."email",
+					"s"."sms",
+					"s"."pushover",
+					"s"."warning_threshold",
+					"s"."warning_threshold_counter",
+					"s"."timeout",
+					"s"."website_username",
+					"s"."website_password"
+				FROM '.PSM_DB_PREFIX."servers AS s
 				{$sql_join}
-				{$sql_where}
-				ORDER BY `active` ASC, `status` DESC, `label` ASC";
+				{$sql_where}"
+                                .'
+				ORDER BY "active" ASC, "status" DESC, "label" ASC';
 		$servers = $this->db->query($sql);
 
 		if($server_id !== null && count($servers) == 1) {

@@ -57,11 +57,11 @@ class LogsArchiver implements ArchiverInterface {
 	public function cleanup(\DateTime $retention_date, $server_id = null) {
 		$sql_where_server = ($server_id !== null)
 				// this is obviously not the cleanest way to implement this when using paramter binding.. sorry.
-				? ' `server_id` = ' . intval($server_id) . ' AND '
+				? ' "server_id" = ' . intval($server_id) . ' AND '
 				: '';
 
 		$this->db->execute(
-			"DELETE FROM `".PSM_DB_PREFIX."log` WHERE {$sql_where_server} `datetime` < :latest_date",
+			"DELETE FROM ".PSM_DB_PREFIX."log WHERE {$sql_where_server} datetime < :latest_date",
 			array('latest_date' => $retention_date->format('Y-m-d 00:00:00')),
 			false
 		);

@@ -321,11 +321,11 @@ class StatusNotifier {
 	public function getUsers($server_id) {
 		// find all the users with this server listed
 		$users = $this->db->query("
-			SELECT `u`.`user_id`, `u`.`name`,`u`.`email`, `u`.`mobile`, `u`.`pushover_key`, `u`.`pushover_device`
-			FROM `".PSM_DB_PREFIX."users` AS `u`
-			JOIN `".PSM_DB_PREFIX."users_servers` AS `us` ON (
-				`us`.`user_id`=`u`.`user_id`
-				AND `us`.`server_id` = {$server_id}
+			SELECT u.user_id, u.name,u.email, u.mobile, u.pushover_key, u.pushover_device
+			FROM ".PSM_DB_PREFIX."users AS u
+			JOIN ".PSM_DB_PREFIX."users_servers AS us ON (
+				us.user_id=u.user_id
+				AND us.server_id = {$server_id}
 			)
 		");
 		return $users;

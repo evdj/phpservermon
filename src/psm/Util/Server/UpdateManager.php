@@ -50,16 +50,16 @@ class UpdateManager extends ContainerAware {
 
 		if(!$skip_perms && $this->container->get('user')->getUserLevel() > PSM_USER_ADMIN) {
 			// restrict by user_id
-			$sql_join = "JOIN `".PSM_DB_PREFIX."users_servers` AS `us` ON (
-						`us`.`user_id`={$this->container->get('user')->getUserId()}
-						AND `us`.`server_id`=`s`.`server_id`
+			$sql_join = "JOIN ".PSM_DB_PREFIX."users_servers AS us ON (
+						us.user_id={$this->container->get('user')->getUserId()}
+						AND us.server_id=s.server_id
 						)";
 		}
 
-		$sql = "SELECT `s`.`server_id`,`s`.`ip`,`s`.`port`,`s`.`label`,`s`.`type`,`s`.`pattern`,`s`.`status`,`s`.`active`,`s`.`email`,`s`.`sms`,`s`.`pushover`
-				FROM `".PSM_DB_PREFIX."servers` AS `s`
-				{$sql_join}
-				WHERE `active`='yes' ";
+		$sql = 'SELECT "s"."server_id","s"."ip","s"."port","s"."label","s"."type","s"."pattern","s"."status","s"."active","s"."email","s"."sms","s"."pushover"
+				FROM '.PSM_DB_PREFIX."servers AS s"
+                                ."{$sql_join}"
+				.' WHERE "active"=\'yes\' ';
 
 		$servers = $this->container->get('db')->query($sql);
 

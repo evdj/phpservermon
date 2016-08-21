@@ -181,17 +181,17 @@ class Database {
 	public function select($table, $where = null, $fields = null, $limit = '', $orderby = null, $direction = 'ASC'){
 		// build query
 		$query_parts = array();
-		$query_parts[] = 'SELECT SQL_CALC_FOUND_ROWS';
+		$query_parts[] = 'SELECT';
 
 		// Fields
 		if ($fields !== null && !empty($fields)) {
-			$query_parts[] = "`".implode('`,`', $fields)."`";
+			$query_parts[] = '"'.implode('","', $fields).'"';
 		} else {
 			$query_parts[] = ' * ';
 		}
 
 		// From
-		$query_parts[] = "FROM `{$table}`";
+		$query_parts[] = sprintf('FROM "%s"', $table);
 
 		// Where clause
 		$query_parts[] = $this->buildSQLClauseWhere($table, $where);
@@ -237,7 +237,7 @@ class Database {
 	 * @return int number of affected rows
 	 */
 	public function delete($table, $where = null){
-		$sql = 'DELETE FROM `'.$table.'` ' . $this->buildSQLClauseWhere($table, $where);
+		$sql = 'DELETE FROM "'.$table.'" ' . $this->buildSQLClauseWhere($table, $where);
 
 		return $this->exec($sql);
 	}
@@ -253,23 +253,33 @@ class Database {
 			// insert mode
 			$query = "INSERT INTO ";
 			$exec = false;
+                        $query .= "{$table} ";
+                        $fields = array_keys($data);
+                        $query .= "(".implode(',', $fields).") VALUES ";
+                        $fieldVals = [];
+                        foreach($data as $field => $value) {
+                            if(is_null($value)) {
+                                $value = 'NULL';
+                            } else {
+                                $value = $this->quote($value);
+                            }
+                            array_push($fieldVals, $value);
+                        }
+                        $query .= "(". implode(',',$fieldVals) .")";
 		} else {
 			$query = "UPDATE ";
 			$exec = true;
+                        $query .= "{$table} SET ";
+                        foreach($data as $field => $value) {
+                            if(is_null($value)) {
+                                $value = 'NULL';
+                            } else {
+                                $value = $this->quote($value);
+                            }
+                            $query .= "{$field}={$value}, ";
+                        }
+                        $query = substr($query, 0, -2) . ' ' . $this->buildSQLClauseWhere($table, $where);
 		}
-
-		$query .= "`{$table}` SET ";
-
-		foreach($data as $field => $value) {
-			if(is_null($value)) {
-				$value = 'NULL';
-			} else {
-				$value = $this->quote($value);
-			}
-			$query .= "`{$table}`.`{$field}`={$value}, ";
-		}
-
-		$query = substr($query, 0, -2) . ' ' . $this->buildSQLClauseWhere($table, $where);
 
 		if($exec) {
 			return $this->exec($query);
@@ -296,9 +306,9 @@ class Database {
 		if(empty($data)) return false;
 
 		// prepare first part
-		$query = "INSERT INTO `{$table}` ";
+		$query = 'INSERT INTO '. $table .' ';
 		$fields = array_keys($data[0]);
-		$query .= "(`".implode('`,`', $fields)."`) VALUES ";
+		$query .= '("'.implode('","', $fields).'") VALUES ';
 
 		// prepare all rows to be inserted with placeholders for vars (\?)
 		$q_part = array_fill(0, count($fields), '?');
@@ -339,10 +349,11 @@ class Database {
 		$table = $this->quote($table);
 		$db = $this->quote($this->getDbName());
 
-		$if_exists = "SELECT COUNT(*) AS `cnt`
-			FROM `information_schema`.`tables`
-			WHERE `table_schema` = {$db}
-			AND `table_name` = {$table};
+		$if_exists = "SELECT COUNT(*) AS cnt
+			FROM information_schema.tables
+			WHERE table_catalog = {$db}
+			AND table_schema = 'public'
+			AND table_name = {$table};
 		";
 		$if_exists = $this->query($if_exists);
 
@@ -402,14 +413,14 @@ class Database {
 				$query .= " WHERE ";
 
 				foreach($where as $field => $value) {
-					$query .= "`{$table}`.`{$field}`={$this->quote($value)} AND ";
+					$query .= sprintf('%s."%s"=%s AND ', $table,$field,$this->quote($value) );
 				}
 				$query = substr($query, 0, -5);
 			} else {
 				if (strpos($where, '=') === false) {
 					// no field given, use primary field
 					$primary = $this->getPrimary($table);
-					$query .= " WHERE `{$table}`.`{$primary}`={$this->quote($where)}";
+					$query .= sprintf(' WHERE %s."%s"=%s', $table, $primary, $this->quote($where) );
 				} elseif (strpos(strtolower(trim($where)), 'where') === false) {
 					$query .= " WHERE {$where}";
 				} else {
@@ -435,7 +446,7 @@ class Database {
 				$query .= " ORDER BY ";
 
 				foreach($order_by as $field) {
-					$query .= "`{$field}`, ";
+					$query .= sprintf('"%s", ', $field);
 				}
 				// remove trailing ", "
 				$query = substr($query, 0, -2);
@@ -498,7 +509,7 @@ class Database {
 		// Initizale connection
 		try {
 			$this->pdo = new \PDO(
-				'mysql:host='.$this->db_host.';dbname='.$this->db_name.';charset=utf8',
+				'pgsql:host='.$this->db_host.';dbname='.$this->db_name,
 				$this->db_user,
 				$this->db_pass
 			);

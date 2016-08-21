@@ -80,7 +80,7 @@ class InstallController extends AbstractController {
 		} else {
 			$this->addMessage('PHP cURL module found', 'success');
 		}
-		if(!in_array('mysql', \PDO::getAvailableDrivers())) {
+		if(!in_array('pgsql', \PDO::getAvailableDrivers())) {
 			$errors++;
 			$this->addMessage('The PDO MySQL driver needs to be installed.', 'error');
 		}

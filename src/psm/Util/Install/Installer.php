@@ -126,9 +126,10 @@ class Installer {
 
 		$this->log('Populating database...');
 		$queries = array();
-		$queries[] = "INSERT INTO `" . PSM_DB_PREFIX . "servers` (`ip`, `port`, `label`, `type`, `pattern`, `status`, `error`, `rtime`, `last_online`, `last_check`, `active`, `email`, `sms`, `pushover`) VALUES ('http://sourceforge.net/index.php', 80, 'SourceForge', 'website', '', 'on', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'yes', 'yes', 'yes', 'yes'), ('smtp.gmail.com', 465, 'Gmail SMTP', 'service', '', 'on', '', '', '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'yes', 'yes', 'yes', 'yes')";
-		$queries[] = "INSERT INTO `" . PSM_DB_PREFIX . "users_servers` (`user_id`,`server_id`) VALUES (1, 1), (1, 2);";
-		$queries[] = "INSERT INTO `" . PSM_DB_PREFIX . "config` (`key`, `value`) VALUE
+		$queries[] = "INSERT INTO " . PSM_DB_PREFIX . "servers (ip, port, label, type, pattern, status, error, rtime, last_online, last_check, active, email, sms, pushover) VALUES ('http://sourceforge.net/index.php', 80, 'SourceForge', 'website', '', 'on', '', default, default, default, 'yes', 'yes', 'yes', 'yes'), ('smtp.gmail.com', 465, 'Gmail SMTP', 'service', '', 'on', '', default, default, default, 'yes', 'yes', 'yes', 'yes')";
+		$queries[] = "INSERT INTO " . PSM_DB_PREFIX . "users_servers (user_id,server_id) VALUES (1, 1), (1, 2);";
+		$queries[] = "TRUNCATE " . PSM_DB_PREFIX . "config;";
+		$queries[] = "INSERT INTO " . PSM_DB_PREFIX . "config (key, value) VALUES
 					('language', 'en_US'),
 					('email_status', '1'),
 					('email_from_email', 'monitor@example.org'),
@@ -168,99 +169,103 @@ class Installer {
 	 */
 	protected function installTables() {
 		$tables = array(
-			PSM_DB_PREFIX . 'config' => "CREATE TABLE `" . PSM_DB_PREFIX . "config` (
-							`key` varchar(255) NOT NULL,
-							`value` varchar(255) NOT NULL,
-							PRIMARY KEY (`key`)
-						) ENGINE=MyISAM DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'users' => "CREATE TABLE IF NOT EXISTS `" . PSM_DB_PREFIX . "users` (
-							`user_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-							`user_name` varchar(64) NOT NULL COMMENT 'user''s name, unique',
-							`password` varchar(255) NOT NULL COMMENT 'user''s password in salted and hashed format',
-							`password_reset_hash` char(40) DEFAULT NULL COMMENT 'user''s password reset code',
-							`password_reset_timestamp` bigint(20) DEFAULT NULL COMMENT 'timestamp of the password reset request',
-							`rememberme_token` varchar(64) DEFAULT NULL COMMENT 'user''s remember-me cookie token',
-							`level` tinyint(2) unsigned NOT NULL DEFAULT '20',
-							`name` varchar(255) NOT NULL,
-							`mobile` varchar(15) NOT NULL,
-							`pushover_key` varchar(255) NOT NULL,
-							`pushover_device` varchar(255) NOT NULL,
-							`email` varchar(255) NOT NULL,
-							PRIMARY KEY (`user_id`),
-							UNIQUE KEY `unique_username` (`user_name`)
-						  ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'users_preferences' => "CREATE TABLE IF NOT EXISTS `" . PSM_DB_PREFIX . "users_preferences` (
-							`user_id` int(11) unsigned NOT NULL,
-							`key` varchar(255) NOT NULL,
-							`value` varchar(255) NOT NULL,
-							PRIMARY KEY (`user_id`, `key`)
-						  ) ENGINE=MyISAM DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'users_servers' => "CREATE TABLE `" . PSM_DB_PREFIX . "users_servers` (
-							`user_id` INT( 11 ) UNSIGNED NOT NULL ,
-							`server_id` INT( 11 ) UNSIGNED NOT NULL ,
-							PRIMARY KEY ( `user_id` , `server_id` )
-							) ENGINE = MYISAM ;",
-			PSM_DB_PREFIX . 'log' => "CREATE TABLE `" . PSM_DB_PREFIX . "log` (
-						  `log_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-						  `server_id` int(11) unsigned NOT NULL,
-						  `type` enum('status','email','sms','pushover') NOT NULL,
-						  `message` varchar(255) NOT NULL,
-						  `datetime` timestamp NOT NULL default CURRENT_TIMESTAMP,
-						  PRIMARY KEY  (`log_id`)
-						) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
-            PSM_DB_PREFIX . 'log_users' => "CREATE TABLE `" . PSM_DB_PREFIX . "log_users` (
-                                   `log_id`  int(11) UNSIGNED NOT NULL ,
-                                   `user_id`  int(11) UNSIGNED NOT NULL ,
-                                   PRIMARY KEY (`log_id`, `user_id`)
-         						) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'servers' => "CREATE TABLE `" . PSM_DB_PREFIX . "servers` (
-						  `server_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-						  `ip` varchar(500) NOT NULL,
-						  `port` int(5) unsigned NOT NULL,
-						  `label` varchar(255) NOT NULL,
-						  `type` enum('service','website') NOT NULL default 'service',
-						  `pattern` varchar(255) NOT NULL,
-						  `status` enum('on','off') NOT NULL default 'on',
-						  `error` varchar(255) NULL,
-						  `rtime` FLOAT(9, 7) NULL,
-						  `last_online` datetime NULL,
-						  `last_check` datetime NULL,
-						  `active` enum('yes','no') NOT NULL default 'yes',
-						  `email` enum('yes','no') NOT NULL default 'yes',
-						  `sms` enum('yes','no') NOT NULL default 'no',
-						  `pushover` enum('yes','no') NOT NULL default 'yes',
-                          `warning_threshold` mediumint(1) unsigned NOT NULL DEFAULT '1',
-                          `warning_threshold_counter` mediumint(1) unsigned NOT NULL DEFAULT '0',
-                          `timeout` smallint(1) unsigned NULL DEFAULT NULL,
-                          `website_username` varchar(255) DEFAULT NULL,
-						  `website_password` varchar(255) DEFAULT NULL,
-						  PRIMARY KEY  (`server_id`)
-						) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'servers_uptime' => "CREATE TABLE IF NOT EXISTS `" . PSM_DB_PREFIX . "servers_uptime` (
-						`servers_uptime_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-						`server_id` int(11) unsigned NOT NULL,
-						`date` datetime NOT NULL,
-						`status` tinyint(1) unsigned NOT NULL,
-						`latency` float(9,7) DEFAULT NULL,
-						PRIMARY KEY (`servers_uptime_id`),
-						KEY `server_id` (`server_id`)
-					  ) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
-			PSM_DB_PREFIX . 'servers_history' => "CREATE TABLE IF NOT EXISTS `" . PSM_DB_PREFIX . "servers_history` (
-						  `servers_history_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-						  `server_id` int(11) unsigned NOT NULL,
-						  `date` date NOT NULL,
-						  `latency_min` float(9,7) NOT NULL,
-						  `latency_avg` float(9,7) NOT NULL,
-						  `latency_max` float(9,7) NOT NULL,
-						  `checks_total` int(11) unsigned NOT NULL,
-						  `checks_failed` int(11) unsigned NOT NULL,
-						  PRIMARY KEY (`servers_history_id`),
-						  UNIQUE KEY `server_id_date` (`server_id`,`date`)
-						) ENGINE=MyISAM  DEFAULT CHARSET=utf8;",
+			PSM_DB_PREFIX . 'config' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "config (
+							key varchar(255) NOT NULL,
+							value varchar(255) NOT NULL,
+							PRIMARY KEY (key)
+						);",
+			PSM_DB_PREFIX . 'users' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "users (
+							user_id serial,
+							user_name varchar(64) NOT NULL,
+							password varchar(255) NOT NULL,
+							password_reset_hash char(40) DEFAULT NULL,
+							password_reset_timestamp int4 DEFAULT NULL,
+							rememberme_token varchar(64) DEFAULT NULL,
+							level int2 NOT NULL DEFAULT '20',
+							name varchar(255) NOT NULL,
+							mobile varchar(15) NOT NULL,
+							pushover_key varchar(255) NOT NULL,
+							pushover_device varchar(255) NOT NULL,
+							email varchar(255) NOT NULL,
+							PRIMARY KEY (user_id),
+							UNIQUE (user_name)
+						  );",
+			PSM_DB_PREFIX . 'users_preferences' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "users_preferences (
+							user_id int4 NOT NULL,
+							key varchar(255) NOT NULL,
+							value varchar(255) NOT NULL,
+							PRIMARY KEY (user_id, key)
+						  );",
+			PSM_DB_PREFIX . 'users_servers' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "users_servers (
+							user_id int4 NOT NULL ,
+							server_id int4 NOT NULL ,
+							PRIMARY KEY ( user_id , server_id )
+							);",
+			PSM_DB_PREFIX . 'logtype' => "CREATE TYPE " . PSM_DB_PREFIX . "logtype AS enum('status','email','sms','pushover');",
+			PSM_DB_PREFIX . 'log' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "log (
+						  log_id serial,
+						  server_id int4 NOT NULL,
+						  type enum('status','email','sms','pushover') NOT NULL,
+						  message varchar(255) NOT NULL,
+						  datetime timestamp NOT NULL default CURRENT_TIMESTAMP,
+						  PRIMARY KEY  (log_id)
+						);",
+            PSM_DB_PREFIX . 'log_users' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "log_users (
+                                   log_id  int4 NOT NULL ,
+                                   user_id  int4 NOT NULL ,
+                                   PRIMARY KEY (log_id, user_id)
+         						);",
+			PSM_DB_PREFIX . 'serverstype' => "CREATE TYPE " . PSM_DB_PREFIX . "serverstype AS ENUM('service','website');",
+			PSM_DB_PREFIX . 'onoff' => "CREATE TYPE " . PSM_DB_PREFIX . "onoff AS ENUM('on','off');",
+			PSM_DB_PREFIX . 'yesno' => "CREATE TYPE " . PSM_DB_PREFIX . "yesno AS ENUM('yes','no');",
+
+			PSM_DB_PREFIX . 'servers' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "servers (
+						  server_id serial,
+						  ip varchar(500) NOT NULL,
+						  port int4 NOT NULL,
+						  label varchar(255) NOT NULL,
+						  type ". PSM_DB_PREFIX ."serverstype NOT NULL default 'service',
+						  pattern varchar(255) NOT NULL,
+						  status ". PSM_DB_PREFIX ."onoff NOT NULL default 'on',
+						  error varchar(255) NULL,
+						  rtime float NULL,
+						  last_online timestamp NULL,
+						  last_check timestamp NULL,
+						  active ". PSM_DB_PREFIX ."yesno NOT NULL default 'yes',
+						  email ". PSM_DB_PREFIX ."yesno NOT NULL default 'yes',
+						  sms ". PSM_DB_PREFIX ."yesno NOT NULL default 'no',
+						  pushover ". PSM_DB_PREFIX ."yesno NOT NULL default 'yes',
+                          warning_threshold int2 NOT NULL DEFAULT '1',
+                          warning_threshold_counter int2 NOT NULL DEFAULT '0',
+                          timeout int2 NULL DEFAULT NULL,
+                          website_username varchar(255) DEFAULT NULL,
+						  website_password varchar(255) DEFAULT NULL,
+						  PRIMARY KEY  (server_id)
+						);",
+			PSM_DB_PREFIX . 'servers_uptime' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "servers_uptime (
+						servers_uptime_id serial,
+						server_id int4 NOT NULL,
+						date timestamp NOT NULL,
+						status int2 NOT NULL,
+						latency float DEFAULT NULL,
+						PRIMARY KEY (servers_uptime_id)
+					  );",
+			PSM_DB_PREFIX . 'servers_history' => "CREATE TABLE IF NOT EXISTS " . PSM_DB_PREFIX . "servers_history (
+						  servers_history_id serial,
+						  server_id int4 NOT NULL,
+						  date date NOT NULL,
+						  latency_min float NOT NULL,
+						  latency_avg float NOT NULL,
+						  latency_max float NOT NULL,
+						  checks_total int4 NOT NULL,
+						  checks_failed int4 NOT NULL,
+						  PRIMARY KEY (servers_history_id),
+						  UNIQUE (server_id,date)
+						);",
 		);
 
 		foreach($tables as $name => $sql) {
-			$if_table_exists = $this->db->query("SHOW TABLES LIKE '{$name}'");
+			#$if_table_exists = $this->db->query("SHOW TABLES LIKE '{$name}'");
 
 			if(!empty($if_table_exists)) {
 				$this->log('Table ' . $name . ' already exists in your database!');

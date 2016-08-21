@@ -180,8 +180,8 @@ class HistoryGraph {
 
 		$records = $this->db->execute(
 			'SELECT *
-				FROM `' . PSM_DB_PREFIX . "servers_$type`
-				WHERE `server_id` = :server_id AND `date` BETWEEN :start_time AND :end_time ORDER BY `date` ASC",
+				FROM ' . PSM_DB_PREFIX . "servers_$type
+				WHERE server_id = :server_id AND date BETWEEN :start_time AND :end_time ORDER BY date ASC",
 			array(
 				'server_id' => $server_id,
 				'start_time' => $start_time->format('Y-m-d H:i:s'),
