@@ -83,7 +83,7 @@ class StatusUpdater {
 			'server_id' => $server_id,
 		), array(
 			'server_id', 'ip', 'port', 'label', 'type', 'pattern', 'status', 'active', 'warning_threshold',
-			'warning_threshold_counter', 'timeout', 'website_username', 'website_password'
+			'warning_threshold_counter', 'timeout', 'website_username', 'website_password', "dns_query", "dns_type", "dns_expected"
 		));
 		if(empty($this->server)) {
 			return false;
@@ -144,13 +144,12 @@ class StatusUpdater {
 	 * @return boolean
 	 */
 	protected function updateDNS($max_runs, $run = 1) {
-                printf("Checking DNS\n");
                 $status = false;
-                if (!strlen($this->server["dns_query"])) {
+                if (!isset($this->server["dns_query"]) || !strlen($this->server["dns_query"])) {
                     // Missing required fields. Fall back to service check
                     return $this->updateService($max_runs, $run);
                 }
-                list($dns_server,$question,$type,$response) = array( $this->server["ip"], $this->server["dns_query"], $this->server["dns_type"], $this->server["expected"] );
+                list($dns_server,$question,$type,$response) = array( $this->server["ip"], $this->server["dns_query"], $this->server["dns_type"], $this->server["dns_expected"] );
                 if (!strlen($dns_server) || $dns_server == 'default' || $dns_server == '') {
                     $dns_server = '8.8.8.8'; # Google DNS server
                 }
