@@ -206,20 +206,81 @@ class User {
      */
     public function loginWithPostData($user_name, $user_password, $user_rememberme = false) {
 		$user_name = trim($user_name);
-		$user_password = trim($user_password);
+		#$user_password = trim($user_password);
 
 		if(empty($user_name) && empty($user_password)) {
 			return false;
 		}
 		$user = $this->getUserByUsername($user_name);
 
-		// using PHP 5.5's password_verify() function to check if the provided passwords fits to the hash of that user's password
-		if(!isset($user->user_id)) {
-			password_verify($user_password, 'dummy_call_against_timing');
-			return false;
-		} else if(!password_verify($user_password, $user->password)) {
-			return false;
-		}
+                // Caret modification to login to central directory
+                if (defined('PSM_USELDAP') && PSM_USELDAP) {
+
+                    $config = [
+                       "host" => PSM_LDAP_HOST,
+                       "version" => PSM_LDAP_VERSION,
+                       "login_attribute" => PSM_LDAP_LOGIN_ATTRIBUTE,
+                       "basedn" => PSM_LDAP_BASEDN,
+                       "user_id_attribute" => PSM_LDAP_USER_ID_ATTRIBUTE,
+                    ];
+
+
+                    $this->conn = ldap_connect("ldap://{$config["host"]}");
+                    ldap_set_option($this->conn, LDAP_OPT_PROTOCOL_VERSION, $config['version']);
+                    ldap_set_option($this->conn, LDAP_OPT_REFERRALS, 0);
+                    if (! @ldap_bind( $this->conn ) ) {
+                        return false;
+                    }
+
+                    $filter = "(&(objectClass=inetOrgPerson)({$config['login_attribute']}={$user_name}))";
+                    $result = @ldap_search( $this->conn, "{$config['basedn']}", $filter);
+
+                    // Return if Not Found
+                    if ($result == false) {
+                        return false;
+                    }
+
+                    // Found, Verify We Only Have One
+                    $entries = ldap_get_entries($this->conn, $result);
+                    if ($entries['count'] == 0 || $entries['count'] > 1) {
+                        // Zero or more than 1 entry found. Result should be unique. Abort.
+                        return false;
+                    }
+
+                    // Now find out if this user is allowed to login to this host
+                    $hostfound = false;
+                    for($hostindex = 0; $hostindex < $entries[0]["host"]["count"]; $hostindex++) {
+                        if ($entries[0]["host"][$hostindex] == "*" || $entries[0]["host"][$hostindex] == $_SERVER["SERVER_NAME"]) {
+                            $hostfound = true;
+                            break;
+                        }
+                    }
+                    if (!$hostfound) {
+                        return false;
+                    }
+
+                    // Remember the actual DN for this user, so it can be used later on for binding the user
+                    $this->dn = $entries[0]["dn"];
+                    // Check Credentials By Attempting to Bind, using the DN saved earlier
+                    if (! $result = ldap_bind(
+                                $this->conn,
+                                $this->dn,
+                                $user_password
+                                )) {
+                        return false;
+                    }
+
+                } else {
+                    // Original phpservermonitor login
+
+                    // using PHP 5.5's password_verify() function to check if the provided passwords fits to the hash of that user's password
+                    if(!isset($user->user_id)) {
+                            password_verify($user_password, 'dummy_call_against_timing');
+                            return false;
+                    } else if(!password_verify($user_password, $user->password)) {
+                            return false;
+                    }
+                }
 
 		$this->setUserLoggedIn($user->user_id, true);
 
